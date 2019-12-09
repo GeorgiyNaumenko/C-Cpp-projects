@@ -1,77 +1,42 @@
-#ifndef GEOMETRY2D_H
-#define GEOMETRY2D_H
+#ifndef _GEOMETRY2D_H_
+#define _GEOMETRY2D_H_
 
 #include <math.h>
 #include <stdio.h>
 #include "common.h"
+// #include "../src/Geometry2D.c"
 
-/* Declaration all types, structures and functions */
-
-/* Point2D type as vector in R^2 or as 2 reals */
-typedef struct Point2D_{
-  union{
-    struct{
-      Dtype x;        /* first real coordinate of point */
-      Dtype y;        /* second real coordinate of point */
-    };
-    Dtype vector[2];  /* vector with 2 coordinates */
-  };
-} Point2D;
-
-/* Segment2D type as 2 points */
-typedef struct Segment2D_{
-  Point2D a;
-  Point2D b;
-} Segment2D;
-
-/* Triangle2D type as 3 points */
-typedef struct Triangle2D_{
-  Point2D a;
-  Point2D b;
-  Point2D c;
-} Triangle2D;
-
-/* Line2D type as 3 reals, which are characterise linear equation ax^2 + by + c = 0 */
-typedef struct Line2D_{
-  Dtype a;
-  Dtype b;
-  Dtype c;
-} Line2D;
-
-/* I have to calculate the areas of ​​2 figures onto which the triangle cuts off given line,
-so what I want to do is the "main type" Geometry2D and members of this type will be Triangle2D and Line2D type objects */
-typedef struct Geometry2D_{
-  Triangle2D a;
-  Line2D l;
-  Dtype s1, s2;    /* two areas we want to find */
-} Geometry2D;
+/* Declaration of all functions */
 
 /* input from keyboard */
-extern int inputGeometry2D(Geometry2D* x);
+extern Itype inputGeometry2D(Geometry2D* x);
 
 /* output in the console */
-extern void outputGeometry2D(Geometry2D x, int percision);
+extern void outputGeometry2D(Geometry2D x);
 
 /* input from binary file */
-extern int inputBinaryFile(char* filename, Geometry2D* x);
+extern Itype inputBinaryFile(char* filename, Geometry2D* x);
 
 /* output in binary file */
-extern int outputBinaryFile(char* filename, Geometry2D x);
+extern Itype outputBinaryFile(char* filename, Geometry2D x);
 
 /* input from text file */
-extern int inputTextFile(char* filename, Geometry2D* x);
+extern Itype inputTextFile(char* filename, Geometry2D* x);
 
 /* output in text file */
-extern int outputTextFile(char* filename, Geometry2D x, int percision);
+extern Itype outputTextFile(char* filename, Geometry2D x);
 
 /* function "find_two_areas(x)" returns Geometry2D type object and calculate 2 areas we need */
 extern Geometry2D find_two_areas(Geometry2D* x);
 
-/* function "add(a, b)" which is adding 2 vectors and returns new Point2D type object as vector*/
+/* function "add(a, b)" which is adding 2 vectors and returns new Point2D type object as vector */
 extern Point2D add(Point2D* a, Point2D* b);
 
-/* function "mulS(a, b)" returns scalar product of 2 vectors a and b*/
+/* function "mulS(a, b)" returns scalar product of 2 vectors a and b */
 extern Dtype mulS(Point2D* a, Point2D* b);
+
+/* function "homot(a, lambda)" returns vector, multiplied by lambda */
+extern Point2D homot(Point2D* a, Dtype lambda);
 
 /* function "mul(a, b)" returns vector product of 2 vectors a and b as a real number wich shows Oz coordinate.
 We allways get vector (0, 0, z) and this function returns z. */
@@ -89,6 +54,12 @@ extern Point2D intersection_l_s(Line2D* a, Segment2D* b);
 
 /* function intersection_s_s(a, b) returns point of intersection of 2 Line2D type objects if this point exists */
 extern Point2D intersection_l_l(Line2D* a, Line2D* b);
+
+/* function console_show_line(line) prints line equation in the console */
+extern void console_show_line(Line2D* line);
+
+/* function textfile_show_line(line) prints line equation in the text file f */
+extern void textfile_show_line(Line2D* line, FILE *f);
 
 /* function "two_points_length(a, b)" returns the distance between Point2D type objects a and b */
 extern Dtype two_points_length(Point2D* a, Point2D* b);
@@ -156,4 +127,4 @@ extern Line2D heigthC(Triangle2D* a);
 /* function "centroid(a)" returns Point2D type object - the point of medians' intersection in triangle a */
 extern Point2D centroid(Triangle2D* a);
 
-#endif /* GEOMETRY2D_H end */
+#endif /* _GEOMETRY2D_H_ end */

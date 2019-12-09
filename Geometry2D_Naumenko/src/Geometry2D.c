@@ -1,6 +1,10 @@
+#ifndef _GEOMETRY2D_C_
+#define _GEOMETRY2D_C_
+
 #include <stdio.h>
 #include <math.h>
-#include "../headers/Geometry2D.h"  /* it connects to this file if only it in the current folder*/
+#include <stdlib.h>
+#include "../headers/Geometry2D.h"
 #include "../headers/common.h"
 
 
@@ -17,6 +21,13 @@ Dtype mulS(Point2D* a, Point2D* b){
 
 Dtype mul(Point2D* a, Point2D* b){
   return a->vector[0] * b->vector[1] - a->vector[1] * b->vector[0];
+}
+
+Point2D homot(Point2D* a, Dtype lambda){
+  Point2D new;
+  new.vector[0] = a->vector[0]*lambda;
+  new.vector[1] = a->vector[1]*lambda;
+  return new;
 }
 
 Point2D intersection_s_s(Segment2D* a, Segment2D* b){
@@ -70,8 +81,6 @@ Point2D intersection_s_s(Segment2D* a, Segment2D* b){
   }
 
   b2 = y3 - k2*x3;
-
-  // printf("k1 = %f, k2 = %f\n", k1, k2);
 
   /* here we can check what if k1 == k2 */
   if(k1 == k2){
@@ -236,7 +245,7 @@ Line2D line_through_two_points(Point2D* a, Point2D* b){
   Line2D new;
   new.a = a->y - b->y;
   new.b = b->x - a->x;
-  new.c = a->x * b->y - a->y + b->x;
+  new.c = a->x * b->y - a->y * b->x;
   return new;
 }
 
@@ -342,7 +351,7 @@ Dtype inscribed_radius(Triangle2D* a){
 Line2D bisectorA(Triangle2D* a){
   Point2D inc = incenter(a);
   Point2D *p_inc = &inc;
-  return line_through_two_points(p_inc, &a->a);     /* every bisector is passing through the verticle of triangle and the incenter */
+  return line_through_two_points(p_inc, &a->a);     /* every bisector is passing through the vertex of triangle and the incenter */
 }
 
 Line2D bisectorB(Triangle2D* a){
@@ -358,40 +367,58 @@ Line2D bisectorC(Triangle2D* a){
 }
 
 Dtype angelA(Triangle2D* a){
-  Point2D vect_b, vect_c;       /* cosine we can find from the scalar product and the length of the vector */
+  Point2D vect_a, vect_b, vect_c;       /* cosine we can find from the scalar product and the length of the vector */
+  vect_a.vector[0] = a->a.x;
+  vect_a.vector[1] = a->a.y;
   vect_b.vector[0] = a->b.x;
-  vect_b.vector[0] = a->b.y;
+  vect_b.vector[1] = a->b.y;
   vect_c.vector[0] = a->c.x;
-  vect_c.vector[0] = a->c.y;
-  Point2D *p_b = &vect_b, *p_c = &vect_c;
-  Dtype cosine = mulS(p_b, p_c) / two_points_length(&a->b, &a->c);
+  vect_c.vector[1] = a->c.y;
+  Point2D ab_v, ac_v;
+  Point2D min_a = homot(&vect_a, -1.0);
+  Point2D *aa = &min_a;
+  ab_v = add(&vect_b, aa);
+  ac_v = add(&vect_c, aa);
+  Dtype cosine = mulS(&ab_v, &ac_v) / (two_points_length(&a->a, &a->c) * two_points_length(&a->a, &a->b));
   return acos(cosine);
 }
 
 Dtype angelB(Triangle2D* a){
-  Point2D vect_a, vect_c;
+  Point2D vect_a, vect_b, vect_c;
   vect_a.vector[0] = a->a.x;
-  vect_a.vector[0] = a->a.y;
+  vect_a.vector[1] = a->a.y;
+  vect_b.vector[0] = a->b.x;
+  vect_b.vector[1] = a->b.y;
   vect_c.vector[0] = a->c.x;
-  vect_c.vector[0] = a->c.y;
-  Point2D *p_a = &vect_a, *p_c = &vect_c;
-  Dtype cosine = mulS(p_a, p_c) / two_points_length(&a->a, &a->c);
+  vect_c.vector[1] = a->c.y;
+  Point2D ba_v, bc_v;
+  Point2D min_b = homot(&vect_b, -1.0);
+  Point2D *bb = &min_b;
+  ba_v = add(&vect_a, bb);
+  bc_v = add(&vect_c, bb);
+  Dtype cosine = mulS(&ba_v, &bc_v) / (two_points_length(&a->a, &a->b) * two_points_length(&a->c, &a->b));
   return acos(cosine);
 }
 
 Dtype angelC(Triangle2D* a){
-  Point2D vect_b, vect_a;
+  Point2D vect_a, vect_b, vect_c;
   vect_a.vector[0] = a->a.x;
-  vect_a.vector[0] = a->a.y;
+  vect_a.vector[1] = a->a.y;
   vect_b.vector[0] = a->b.x;
-  vect_b.vector[0] = a->b.y;
-  Point2D *p_a = &vect_a, *p_b = &vect_b;
-  Dtype cosine = mulS(p_b, p_a) / two_points_length(&a->a, &a->b);
+  vect_b.vector[1] = a->b.y;
+  vect_c.vector[0] = a->c.x;
+  vect_c.vector[1] = a->c.y;
+  Point2D ca_v, cb_v;
+  Point2D min_c = homot(&vect_c, -1.0);
+  Point2D *cc = &min_c;
+  ca_v = add(&vect_a, cc);
+  cb_v = add(&vect_b, cc);
+  Dtype cosine = mulS(&ca_v, &cb_v) / (two_points_length(&a->a, &a->c) * two_points_length(&a->c, &a->b));
   return acos(cosine);
 }
 
 Line2D heigthA(Triangle2D* a){                              /* if we have line Ax + By + C = 0, all lines -Bx + Ay + C1 = 0 will be            */
-  Line2D bc = line_through_two_points(&a->b, &a->c), h_a;   /* perpendicular to this line, and in order to find C1, we can put our verticle    */
+  Line2D bc = line_through_two_points(&a->b, &a->c), h_a;   /* perpendicular to this line, and in order to find C1, we can put our vertex      */
   Dtype c1 = bc.b * a->a.x - bc.a * a->a.y;                 /* A(x0, y0) in the equation: C1 = Bx0 - Ay0                                       */
   h_a.a = (-1.0) * bc.b;
   h_a.b = bc.a;
@@ -418,11 +445,7 @@ Line2D heigthC(Triangle2D* a){
 }
 
 Geometry2D find_two_areas(Geometry2D* x){
-  // Triangle2D my_triangle = x->a;
-  // Line2D my_line = x->l;
   Segment2D ab, ac, bc;
-  // Line2D line_ab = line_through_two_points(&x->a.a, &x->a.b), line_bc = line_through_two_points(&x->a.c, &x->a.b), line_ac = line_through_two_points(&x->a.a, &x->a.c);
-  // Line2D *p_line_ab = &line_ab, *p_line_ac = &line_ac, *p_line_bc = &line_bc;
   Segment2D *p_ab = &ab, *p_ac = &ac, *p_bc = &bc;
   ab.a = x->a.a;
   ab.b = x->a.b;
@@ -437,7 +460,7 @@ Geometry2D find_two_areas(Geometry2D* x){
     x->s1 = area(&x->a);
   }
 
-  /* line L is passing through the verticle but is not passing through the opposite segment; 3 cases for each verticle */
+  /* line L is passing through the vertex but is not passing through the opposite segment; 3 cases for each vertex */
   else if((x->l.a * x->a.a.x + x->l.b * x->a.a.y + x->l.c == 0) && ((intersection_l_s(&x->l, p_bc).x == HUGE_VAL) && (intersection_l_s(&x->l, p_bc).y == -HUGE_VAL))){
     x->s2 = 0.0;
     x->s1 = area(&x->a);
@@ -475,7 +498,6 @@ Geometry2D find_two_areas(Geometry2D* x){
     p_cpq->c = q;
     x->s1 = area(p_cpq);
     x->s2 = area(&x->a) - x->s1;
-    printf("BC and AC: xp = %f, yp = %f, xq = %f, yq = %f\n", p.x, p.y, q.x, q.y);
   }
 
   /* the case when our line L intersects BC and AB. In this case we chould find those intersection points P and Q and calculate area of triangle PQB */
@@ -490,7 +512,6 @@ Geometry2D find_two_areas(Geometry2D* x){
     p_bpq->c = q;
     x->s1 = area(p_bpq);
     x->s2 = area(&x->a) - x->s1;
-    printf("BC and AB: xp = %f, yp = %f, xq = %f, yq = %f\n", p.x, p.y, q.x, q.y);
   }
 
   /* the case when our line L intersects AC and AB. In this case we chould find those intersection points P and Q and calculate area of triangle PQA */
@@ -505,12 +526,333 @@ Geometry2D find_two_areas(Geometry2D* x){
     p_apq->c = q;
     x->s1 = area(p_apq);
     x->s2 = area(&x->a) - x->s1;
-    printf("AC and AB: xp = %f, yp = %f, xq = %f, yq = %f\n", p.x, p.y, q.x, q.y);
   }
 
   return *x;
 }
 
-int main(){
-  
+void console_show_line(Line2D* line){
+  if(line->a > 0){
+    printf("%fx ", line->a);
+  }
+  else if(line->a < 0){
+    printf("-%fx ", (-1.0)*line->a);
+  }
+  if(line->b > 0){
+    printf("+ %fy ", line->b);
+  }
+  else if(line->b < 0){
+    printf("- %fy ", (-1.0)*line->b);
+  }
+  if(line->c > 0){
+    printf("+ %f", line->c);
+  }
+  else if(line->c < 0){
+    printf("- %f", (-1.0)*line->c);
+  }
+  printf(" = 0\n");
 }
+
+void textfile_show_line(Line2D* line, FILE *f) {
+  if(line->a > 0){
+    fprintf(f, "%fx ", line->a);
+  }
+  else if(line->a < 0){
+    fprintf(f, "-%fx ", (-1.0)*line->a);
+  }
+  if(line->b > 0){
+    fprintf(f, "+ %fy ", line->b);
+  }
+  else if(line->b < 0){
+    fprintf(f, "- %fy ", (-1.0)*line->b);
+  }
+  if(line->c > 0){
+    fprintf(f, "+ %f", line->c);
+  }
+  else if(line->c < 0){
+    fprintf(f, "- %f", (-1.0)*line->c);
+  }
+  fprintf(f, " = 0\n");
+}
+
+Itype inputGeometry2D(Geometry2D* x){
+  printf("Input the Dtype (double) type coordinate 'x' of vertex A and press 'Enter':\n");
+  scanf("%lf", &x->a.a.x);
+  printf("Input the Dtype (double) type coordinate 'y' of vertex A and press 'Enter':\n");
+  scanf("%lf", &x->a.a.y);
+  printf("Input the Dtype (double) type coordinate 'x' of vertex B and press 'Enter':\n");
+  scanf("%lf", &x->a.b.x);
+  printf("Input the Dtype (double) type coordinate 'y' of vertex B and press 'Enter':\n");
+  scanf("%lf", &x->a.b.y);
+  printf("Input the Dtype (double) type coordinate 'x' of vertex C and press 'Enter':\n");
+  scanf("%lf", &x->a.c.x);
+  printf("Input the Dtype (double) type coordinate 'y' of vertex C and press 'Enter':\n");
+  scanf("%lf", &x->a.c.y);
+  printf("Input the Dtype (double) type coefficient 'a' of line L and press 'Enter':\n");
+  scanf("%lf", &x->l.a);
+  printf("Input the Dtype (double) type coefficient 'b' of line L and press 'Enter':\n");
+  scanf("%lf", &x->l.b);
+  printf("Input the Dtype (double) type coefficient 'c' of line L and press 'Enter':\n");
+  scanf("%lf", &x->l.c);
+  return 0;
+}
+
+void outputGeometry2D(Geometry2D x){
+  Geometry2D calculated = find_two_areas(&x);
+  Point2D vector_A, vector_B, vector_C;
+  vector_A.vector[0] = x.a.a.x;
+  vector_B.vector[0] = x.a.b.x;
+  vector_C.vector[0] = x.a.c.x;
+  vector_A.vector[1] = x.a.a.y;
+  vector_B.vector[1] = x.a.b.y;
+  vector_C.vector[1] = x.a.c.y;
+  printf("Let OA->, OB->, OC-> be a radius-vectors of points A, B, C.\n");
+  printf("Scalar products:\n");
+  printf("(OA->, OB->) = %f, (OA->, OC->) = %f, (OB->, OC->) = %f\n", mulS(&vector_A, &vector_B), mulS(&vector_A, &vector_C), mulS(&vector_B, &vector_C));
+  printf("Vector products:\n");
+  printf("[OA-> x OB->] = (0, 0, %f), [OB-> x OA->] = (0, 0, %f)\n", mul(&vector_A, &vector_B), mul(&vector_B, &vector_A));
+  printf("[OA-> x OC->] = (0, 0, %f), [OC-> x OA->] = (0, 0, %f)\n", mul(&vector_A, &vector_C), mul(&vector_C, &vector_A));
+  printf("[OB-> x OC->] = (0, 0, %f), [OC-> x OB->] = (0, 0, %f)\n", mul(&vector_B, &vector_C), mul(&vector_C, &vector_B));
+  printf("Sums of radius-vectors:\n");
+  printf("OA-> + OB-> = (%f, %f)\n", add(&vector_A, &vector_B).x, add(&vector_A, &vector_B).y);
+  printf("OA-> + OC-> = (%f, %f)\n", add(&vector_A, &vector_C).x, add(&vector_A, &vector_C).y);
+  printf("OC-> + OB-> = (%f, %f)\n", add(&vector_C, &vector_B).x, add(&vector_C, &vector_B).y);
+  printf("Lengthes of ABC sides:\n");
+  printf("AB = %f\n", two_points_length(&x.a.a, &x.a.b));
+  printf("AC = %f\n", two_points_length(&x.a.a, &x.a.c));
+  printf("CB = %f\n", two_points_length(&x.a.c, &x.a.b));
+  printf("Some special points and values in ABC:\n");
+  printf("Perimeter of ABC: %f\n", perimeter(&x.a));
+  printf("Area of ABC: %f\n", area(&x.a));
+  printf("Incenter: (%f, %f)\n", incenter(&x.a).x, incenter(&x.a).y);
+  printf("Radius of inscribed circle = %f\n", inscribed_radius(&x.a));
+  printf("Center: (%f, %f)\n", center(&x.a).x, center(&x.a).y);
+  printf("Radius of described circle = %f\n", described_radius(&x.a));
+  printf("Centroid: (%f, %f)\n", centroid(&x.a).x, centroid(&x.a).y);
+  printf("Angles in radians:\n");
+  printf("<A = %f radians\n", angelA(&x.a));
+  printf("<B = %f radians\n", angelB(&x.a));
+  printf("<C = %f radians\n", angelC(&x.a));
+  printf("And as summ you get:\n");
+  printf("pi = %f\n", angelA(&x.a) + angelB(&x.a) + angelC(&x.a));
+  printf("Equalities of some special lines in ABC:\n");
+  printf("Median from vertex A: ");
+  Line2D meda = medianA(&x.a);
+  console_show_line(&meda);
+  printf("Median from vertex B: ");
+  Line2D medb = medianB(&x.a);
+  console_show_line(&medb);
+  printf("Median from vertex C: ");
+  Line2D medc = medianC(&x.a);
+  console_show_line(&medc);
+  printf("Heigth from vertex A: ");
+  Line2D ha = heigthA(&x.a);
+  console_show_line(&ha);
+  printf("Heigth from vertex B: ");
+  Line2D hb = heigthB(&x.a);
+  console_show_line(&hb);
+  printf("Heigth from vertex C: ");
+  Line2D hc = heigthC(&x.a);
+  console_show_line(&hc);
+  printf("Bisector from vertex A: ");
+  Line2D bisa = bisectorA(&x.a);
+  console_show_line(&bisa);
+  printf("Bisector from vertex B: ");
+  Line2D bisb = bisectorB(&x.a);
+  console_show_line(&bisb);
+  printf("Bisector from vertex C: ");
+  Line2D bisc = bisectorC(&x.a);
+  console_show_line(&bisc);
+  printf("And the answer to the main qastion:\n");
+  if (calculated.s2 == 0.0){
+    printf("\nTriangle ABC wasn't divided by line L into 2 figures.\n");
+  }
+  else{
+    printf("\nTriangle ABC was divided by line L into two figures with areas %f and %f\n", calculated.s1, calculated.s2);
+  }
+}
+
+Itype inputBinaryFile(char* filename, Geometry2D* x){
+  FILE *f;
+  f = fopen(filename, "rb");
+  fread(&x->a.a.x, sizeof(Dtype), 1, f);
+  fread(&x->a.a.y, sizeof(Dtype), 1, f);
+  fread(&x->a.b.x, sizeof(Dtype), 1, f);
+  fread(&x->a.b.y, sizeof(Dtype), 1, f);
+  fread(&x->a.c.x, sizeof(Dtype), 1, f);
+  fread(&x->a.c.y, sizeof(Dtype), 1, f);
+  fread(&x->l.a, sizeof(Dtype), 1, f);
+  fread(&x->l.b, sizeof(Dtype), 1, f);
+  fread(&x->l.c, sizeof(Dtype), 1, f);
+  fclose(f);
+  return 0;
+}
+
+Itype outputBinaryFile(char* filename, Geometry2D x){
+
+  Point2D vector_A, vector_B, vector_C;
+  vector_A.vector[0] = x.a.a.x;
+  vector_B.vector[0] = x.a.b.x;
+  vector_C.vector[0] = x.a.c.x;
+  vector_A.vector[1] = x.a.a.y;
+  vector_B.vector[1] = x.a.b.y;
+  vector_C.vector[1] = x.a.c.y;
+
+  FILE *f;
+  f = fopen(filename, "wb");
+
+  Dtype mulSAB = mulS(&vector_A, &vector_B), mulSAC = mulS(&vector_A, &vector_C), mulSBC = mulS(&vector_B, &vector_C);
+  fwrite(&mulSAB, sizeof(Dtype), 1, f);
+  fwrite(&mulSAC, sizeof(Dtype), 1, f);
+  fwrite(&mulSBC, sizeof(Dtype), 1, f);
+
+  Dtype mAB = mul(&vector_A, &vector_B), mBA = mul(&vector_B, &vector_A);
+  Dtype mAC = mul(&vector_A, &vector_C), mCA = mul(&vector_B, &vector_A);
+  Dtype mBC = mul(&vector_B, &vector_C), mCB = mul(&vector_C, &vector_B);
+  fwrite(&mAB, sizeof(Dtype), 1, f);
+  fwrite(&mBA, sizeof(Dtype), 1, f);
+  fwrite(&mAC, sizeof(Dtype), 1, f);
+  fwrite(&mCA, sizeof(Dtype), 1, f);
+  fwrite(&mBC, sizeof(Dtype), 1, f);
+  fwrite(&mCB, sizeof(Dtype), 1, f);
+
+  Point2D sumAB = add(&vector_A, &vector_B), sumAC = add(&vector_A, &vector_C), sumBC = add(&vector_C, &vector_B);
+  fwrite(&sumAB, sizeof(Point2D), 1, f);
+  fwrite(&sumAC, sizeof(Point2D), 1, f);
+  fwrite(&sumBC, sizeof(Point2D), 1, f);
+
+  Dtype lAB = two_points_length(&x.a.a, &x.a.b), lAC = two_points_length(&x.a.a, &x.a.c), lCB = two_points_length(&x.a.c, &x.a.b);
+  fwrite(&lAB, sizeof(Dtype), 1, f);
+  fwrite(&lAC, sizeof(Dtype), 1, f);
+  fwrite(&lCB, sizeof(Dtype), 1, f);
+
+  Dtype per = perimeter(&x.a), ar = area(&x.a), i_r = inscribed_radius(&x.a), d_r = described_radius(&x.a);
+  Point2D inc = incenter(&x.a), cen = center(&x.a), ceid = centroid(&x.a);
+  fwrite(&per, sizeof(Dtype), 1, f);
+  fwrite(&ar, sizeof(Dtype), 1, f);
+  fwrite(&inc, sizeof(Point2D), 1, f);
+  fwrite(&i_r, sizeof(Dtype), 1, f);
+  fwrite(&cen, sizeof(Point2D), 1, f);
+  fwrite(&d_r, sizeof(Dtype), 1, f);
+  fwrite(&ceid, sizeof(Point2D), 1, f);
+
+  Dtype a_an = angelA(&x.a), b_an = angelB(&x.a), c_an = angelC(&x.a);
+  fwrite(&a_an, sizeof(Dtype), 1, f);
+  fwrite(&b_an, sizeof(Dtype), 1, f);
+  fwrite(&c_an, sizeof(Dtype), 1, f);
+
+  Line2D meda = medianA(&x.a);
+  Line2D medb = medianB(&x.a);
+  Line2D medc = medianC(&x.a);
+  Line2D ha = heigthA(&x.a);
+  Line2D hb = heigthB(&x.a);
+  Line2D hc = heigthC(&x.a);
+  Line2D bisa = bisectorA(&x.a);
+  Line2D bisb = bisectorB(&x.a);
+  Line2D bisc = bisectorC(&x.a);
+  fwrite(&meda, sizeof(Line2D), 1, f);
+  fwrite(&medb, sizeof(Line2D), 1, f);
+  fwrite(&medc, sizeof(Line2D), 1, f);
+  fwrite(&ha, sizeof(Line2D), 1, f);
+  fwrite(&hb, sizeof(Line2D), 1, f);
+  fwrite(&hc, sizeof(Line2D), 1, f);
+  fwrite(&bisa, sizeof(Line2D), 1, f);
+  fwrite(&bisb, sizeof(Line2D), 1, f);
+  fwrite(&bisc, sizeof(Line2D), 1, f);
+
+  Geometry2D calculated = find_two_areas(&x);
+  fwrite(&calculated.s1, sizeof(Dtype), 1, f);
+  fwrite(&calculated.s2, sizeof(Dtype), 1, f);
+
+  fclose(f);
+  return 0;
+}
+
+Itype inputTextFile(char* filename, Geometry2D* x){
+  FILE *f;
+  f = fopen(filename, "r");
+  fscanf(f, "%lf %lf %lf %lf %lf %lf %lf %lf %lf", &x->a.a.x, &x->a.a.y, &x->a.b.x, &x->a.b.y, &x->a.c.x, &x->a.c.y, &x->l.a, &x->l.b, &x->l.c);
+  fclose(f);
+  return 0;
+}
+
+Itype outputTextFile(char* filename, Geometry2D x){
+  FILE *f;
+  Geometry2D calculated = find_two_areas(&x);
+  f = fopen(filename, "w");
+  Point2D vector_A, vector_B, vector_C;
+  vector_A.vector[0] = x.a.a.x;
+  vector_B.vector[0] = x.a.b.x;
+  vector_C.vector[0] = x.a.c.x;
+  vector_A.vector[1] = x.a.a.y;
+  vector_B.vector[1] = x.a.b.y;
+  vector_C.vector[1] = x.a.c.y;
+  fprintf(f, "Let OA->, OB->, OC-> be a radius-vectors of points A, B, C.\n");
+  fprintf(f, "Scalar products:\n\n");
+  fprintf(f, "(OA->, OB->) = %f, (OA->, OC->) = %f, (OB->, OC->) = %f\n\n", mulS(&vector_A, &vector_B), mulS(&vector_A, &vector_C), mulS(&vector_B, &vector_C));
+  fprintf(f, "Vector products:\n\n");
+  fprintf(f, "[OA-> x OB->] = (0, 0, %f), [OB-> x OA->] = (0, 0, %f)\n", mul(&vector_A, &vector_B), mul(&vector_B, &vector_A));
+  fprintf(f, "[OA-> x OC->] = (0, 0, %f), [OC-> x OA->] = (0, 0, %f)\n", mul(&vector_A, &vector_C), mul(&vector_C, &vector_A));
+  fprintf(f, "[OB-> x OC->] = (0, 0, %f), [OC-> x OB->] = (0, 0, %f)\n\n", mul(&vector_B, &vector_C), mul(&vector_C, &vector_B));
+  fprintf(f, "Sums of radius-vectors\n\n");
+  fprintf(f, "OA-> + OB-> = (%f, %f)\n", add(&vector_A, &vector_B).x, add(&vector_A, &vector_B).y);
+  fprintf(f, "OA-> + OC-> = (%f, %f)\n", add(&vector_A, &vector_C).x, add(&vector_A, &vector_C).y);
+  fprintf(f, "OC-> + OB-> = (%f, %f)\n\n", add(&vector_C, &vector_B).x, add(&vector_C, &vector_B).y);
+  fprintf(f, "Lengthes of ABC sides:\n\n");
+  fprintf(f, "AB = %f\n", two_points_length(&x.a.a, &x.a.b));
+  fprintf(f, "AC = %f\n", two_points_length(&x.a.a, &x.a.c));
+  fprintf(f, "CB = %f\n\n", two_points_length(&x.a.c, &x.a.b));
+  fprintf(f, "Some special points and values in ABC:\n\n");
+  fprintf(f, "Perimeter of ABC: %f\n", perimeter(&x.a));
+  fprintf(f, "Area of ABC: %f\n", area(&x.a));
+  fprintf(f, "Incenter: (%f, %f)\n", incenter(&x.a).x, incenter(&x.a).y);
+  fprintf(f, "Radius of inscribed circle = %f\n", inscribed_radius(&x.a));
+  fprintf(f, "Center: (%f, %f)\n", center(&x.a).x, center(&x.a).y);
+  fprintf(f, "Radius of described circle = %f\n", described_radius(&x.a));
+  fprintf(f, "Centroid: (%f, %f)\n\n", centroid(&x.a).x, centroid(&x.a).y);
+  fprintf(f, "Angles in radians:\n\n");
+  fprintf(f, "<A = %f radians\n", angelA(&x.a));
+  fprintf(f, "<B = %f radians\n", angelB(&x.a));
+  fprintf(f, "<C = %f radians\n", angelC(&x.a));
+  fprintf(f, "And as summ you get:\n");
+  fprintf(f, "pi = %f\n\n", angelA(&x.a) + angelB(&x.a) + angelC(&x.a));
+  fprintf(f, "Equalities of some special lines in ABC:\n\n");
+  fprintf(f, "Median from vertex A: ");
+  Line2D meda = medianA(&x.a);
+  textfile_show_line(&meda, f);
+  fprintf(f, "Median from vertex B: ");
+  Line2D medb = medianB(&x.a);
+  textfile_show_line(&medb, f);
+  fprintf(f, "Median from vertex C: ");
+  Line2D medc = medianC(&x.a);
+  textfile_show_line(&medc, f);
+  fprintf(f, "\nHeigth from vertex A: ");
+  Line2D ha = heigthA(&x.a);
+  textfile_show_line(&ha, f);
+  fprintf(f, "Heigth from vertex B: ");
+  Line2D hb = heigthB(&x.a);
+  textfile_show_line(&hb, f);
+  fprintf(f, "Heigth from vertex C: ");
+  Line2D hc = heigthC(&x.a);
+  textfile_show_line(&hc, f);
+  fprintf(f, "\nBisector from vertex A: ");
+  Line2D bisa = bisectorA(&x.a);
+  textfile_show_line(&bisa, f);
+  fprintf(f, "Bisector from vertex B: ");
+  Line2D bisb = bisectorB(&x.a);
+  textfile_show_line(&bisb, f);
+  fprintf(f, "Bisector from vertex C: ");
+  Line2D bisc = bisectorC(&x.a);
+  textfile_show_line(&bisc, f);
+  fprintf(f, "\nAnd the answer to the main qastion:\n");
+  if (calculated.s2 == 0.0){
+    fprintf(f, "\nTriangle ABC wasn't divided by line L into 2 figures.\n");
+  }
+  else{
+    fprintf(f, "\nTriangle ABC was divided by line L into two figures with areas %f and %f\n", calculated.s1, calculated.s2);
+  }
+  fclose(f);
+  return 0;
+}
+
+#endif /* end of _GEOMETRY2D_C_ */

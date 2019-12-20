@@ -12,8 +12,6 @@ int main(){
 
   if ("text" == q){
 
-    /* This output is not finished yet: it doesn't want to write polynoms */
-
     const char* filename = "IPoly_out.txt";
     ofstream fout;
 
